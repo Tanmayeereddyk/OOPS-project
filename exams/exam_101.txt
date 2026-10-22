@@ -1,0 +1,26 @@
+EXAM
+101
+OOP Midterm
+Object Oriented Programming
+2026-11-15
+90
+QUESTIONS
+MCQ
+1
+Which function initializes an object?
+5
+Compiler
+Constructor
+Destructor
+Variable
+2
+FILL_BLANK
+3
+The capital of France is _____.
+2
+Paris
+SUBJECTIVE
+4
+Explain encapsulation.
+10
+Encapsulation combines data and methods in a class and controls access to that data.
