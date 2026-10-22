@@ -12,6 +12,7 @@ class Exam
 {
 private:
     int examId;
+    int examId;
     std::string title;
     std::string subject;
     std::string date;
@@ -56,6 +57,8 @@ public:
     // Returns exam ID
     int getExamId() const;
 
+    //Returns subject ID
+     
     // Returns exam title
     std::string getExamName() const;
 
