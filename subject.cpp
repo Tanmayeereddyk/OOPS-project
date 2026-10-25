@@ -1,5 +1,6 @@
 #include "Subject.h"
 #include "Validation.h"
+#include <vector>
 //Small helper (only used inside this file)
 namespace {
 // Converts text to a whole number. Returns false if the text is not a number.
@@ -12,6 +13,7 @@ bool toNumber(const std::string& text, int& number) {
         return false;
     }
 }
+    std::vector<Subject> subjectRegistry;
 }
 //Constructors
 Subject::Subject() {
@@ -74,4 +76,17 @@ bool Subject::fromLine(const std::string& line, Subject& subject) {
     // Everything is valid, so fill the subject
     subject = Subject(id, nameText);
     return true;
+}
+
+//to help in exam class
+int Subject::findSubjectIdByName(const std::string& subjectName) {
+    subjectName=subjectName.tolower();//from the exam class
+    for (const Subject& subject : subjectRegistry) {
+        subj_name=subject.getSubjectName();//from subject class
+        if (subj_name == subjectName) {
+            return subject.getSubjectId();
+        }
+    }
+
+    return -1;
 }
