@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 class Subject {
+static int findSubjectIdByName(const std::string& subjectName);
 private:
     int subjectId;
     std::string subjectName;
