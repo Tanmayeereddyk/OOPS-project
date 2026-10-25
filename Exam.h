@@ -7,12 +7,12 @@
 #include <memory>
 
 #include "Question.h"
-
+#include "subject.h"
 class Exam
 {
 private:
     int examId;
-    int examId;
+    int subjectId;
     std::string title;
     std::string subject;
     std::string date;
@@ -58,7 +58,8 @@ public:
     int getExamId() const;
 
     //Returns subject ID
-     
+     int getSubjectId() const;
+
     // Returns exam title
     std::string getExamName() const;
 
