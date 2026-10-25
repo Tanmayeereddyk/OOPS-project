@@ -27,6 +27,7 @@ Exam::Exam(int id,
       subject(examSubject),
       date(examDate),
       time(duration),
+      subjectId(Subject::findSubjectIdByName(examSubject)),
       maxMarks(0.0),
       questions()
 {
@@ -393,6 +394,10 @@ string Exam::getSubject() const
     return subject;
 }
 
+//Return subjectId
+int Exam::getSubjectId() const {
+    return subjectId;
+}
 
 // Returns the exam date
 string Exam::getDate() const
