@@ -31,11 +31,7 @@ bool hasNoTrailingData(std::istringstream& line) {
     line >> std::ws;
     return line.eof();
 }
-AttemptLookupStatus loadAttemptForStudent(const std::string& filePath,
-                                         int studentId,
-                                         int examId,
-                                         SavedAttempt& saved,
-                                         bool& matchingAttemptSeen) {
+AttemptLookupStatus loadAttemptForStudent(const std::string& filePath,int studentId,int examId,SavedAttempt& saved,bool& matchingAttemptSeen) {
     if (filePath.empty()) {
         return AttemptLookupStatus::invalid;
     }
@@ -140,9 +136,7 @@ AttemptLookupStatus loadAttemptForStudent(const std::string& filePath,
     if (input.bad() || insideAttempt) {
         return AttemptLookupStatus::invalid;
     }
-    return matchingAttemptFound
-        ? AttemptLookupStatus::found
-        : AttemptLookupStatus::notFound;
+    return matchingAttemptFound? AttemptLookupStatus::found: AttemptLookupStatus::notFound;
 }
 bool validateRecordedMarks(const SavedAttempt& saved, const Exam& exam) {
     if (!saved.started || !saved.submitted || saved.answers.empty()) {

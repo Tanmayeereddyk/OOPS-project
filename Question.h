@@ -13,7 +13,6 @@ class Question{
        Question(int id, const string& text, double marks);
       //Virtual Destructor
        virtual ~Question();
-
        virtual void display(ostream& out) const=0;
        virtual void input(istream& in)=0;
        virtual void saveToFile(ostream& out) const = 0;

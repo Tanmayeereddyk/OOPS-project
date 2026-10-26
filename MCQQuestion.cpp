@@ -4,14 +4,8 @@
 #include <fstream>
 using namespace std;
 // Constructor
-MCQQuestion::MCQQuestion(int id,
-                         const string& text,
-                         double marks,
-                         const vector<string>& opts,
-                         int correct)
-    : Question(id, text, marks),
-      options(opts),
-      correctOption(correct)
+MCQQuestion::MCQQuestion(int id,const string& text,double marks,const vector<string>& opts,int correct)
+    : Question(id, text, marks),options(opts),correctOption(correct)
 {
     // Validate that exactly four options are provided
     if (options.size() != 4)

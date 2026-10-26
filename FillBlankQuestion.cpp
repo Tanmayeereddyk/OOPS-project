@@ -4,12 +4,8 @@
 #include <fstream>
 using namespace std;
 // Constructor
-FillBlankQuestion::FillBlankQuestion(int id,
-                                     const string& text,
-                                     double marks,
-                                     const string& answer)
-    : Question(id, text, marks),
-      correctAnswer(answer)
+FillBlankQuestion::FillBlankQuestion(int id,const string& text,double marks,const string& answer)
+    : Question(id, text, marks),correctAnswer(answer)
 {
     if (correctAnswer.find_first_not_of(" \t\n\r") == string::npos)
         throw invalid_argument("Correct answer cannot be empty.");

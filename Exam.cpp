@@ -14,19 +14,8 @@
 #include <cerrno>
 using namespace std;
 // Constructor: creates a new examination
-Exam::Exam(int id,
-           const string& examTitle,
-           const string& examSubject,
-           const string& examDate,
-           int duration)
-    : examId(id),
-      title(examTitle),
-      subject(examSubject),
-      date(examDate),
-      time(duration),
-      subjectId(Subject::findSubjectIdByName(examSubject)),
-      maxMarks(0.0),
-      questions()
+Exam::Exam(int id,const string& examTitle,const string& examSubject,const string& examDate, int duration)
+    : examId(id),title(examTitle),subject(examSubject),date(examDate),time(duration),subjectId(Subject::findSubjectIdByName(examSubject)),maxMarks(0.0),questions()
 {
     if (examId <= 0)
         throw invalid_argument("Exam ID must be greater than zero.");
@@ -42,14 +31,7 @@ Exam::Exam(int id,
 }
 // Constructor: loads an existing examination by ID
 Exam::Exam(int id)
-    : examId(id),
-      title(""),
-      subject(""),
-      date(""),
-      time(0),
-      subjectId(-1),
-      maxMarks(0.0),
-      questions()
+    : examId(id),title(""),subject(""),date(""),time(0),subjectId(-1),maxMarks(0.0),questions()
 {
     if (examId <= 0)
         throw invalid_argument("Exam ID must be greater than zero.");

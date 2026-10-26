@@ -6,11 +6,7 @@
 #include <vector>
 #include <stdexcept>
 ClassReport::ClassReport() {}
-bool ClassReport::generateReport(int examId,
-                                const std::string& className,
-                                const std::string& section,
-                                std::ostream& out,
-                                const std::string& attemptFilePath) const {
+bool ClassReport::generateReport(int examId,const std::string& className,const std::string& section,std::ostream& out,const std::string& attemptFilePath) const {
     StudentManager studentManager("data/students.txt");
     studentManager.loadData();
     std::vector<Student> students = studentManager.findByClassAndSection(className, section);

@@ -6,9 +6,6 @@ struct Answer {
     std::string response;
     double marksAwarded;
     bool evaluated;
-    Answer(int id = 0,
-           const std::string& studentResponse = "",
-           double marks = 0.0,
-           bool isEvaluated = false);
+    Answer(int id = 0,const std::string& studentResponse = "",double marks = 0.0,bool isEvaluated = false);
 };
 #endif

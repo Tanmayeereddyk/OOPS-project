@@ -8,10 +8,7 @@ private:
     bool correctAnswer;
 public:
     // Constructor
-    TrueFalseQuestion(int id,
-                      const std::string& text,
-                      double marks,
-                      bool answer);
+    TrueFalseQuestion(int id,const std::string& text,double marks,bool answer);
     // Override virtual functions
     void display(std::ostream& out) const override;
     void input(std::istream& in) override;

@@ -13,24 +13,13 @@
 #include <stdexcept>
 // Constructor
 ExamAttempt::ExamAttempt(int attemptId, const Student& student, const Exam& exam)
-    : attemptId(attemptId),
-      studentId(student.getStudentId()),
-      examId(exam.getExamId()),
-      exam(&exam),
-      answers(),
-      currentQuestionIndex(0),
-      started(false),
-      submitted(false)
-{
-}
+    : attemptId(attemptId),studentId(student.getStudentId()),examId(exam.getExamId()),exam(&exam),answers(),currentQuestionIndex(0),started(false),submitted(false)
+{}
 const char* ExamAttempt::defaultAttemptFilePath()
 {
     return AttemptStorage::defaultFilePath();
 }
-void ExamAttempt::restoreSavedState(bool wasStarted,
-                                    bool wasSubmitted,
-                                    int savedQuestionIndex,
-                                    const std::vector<Answer>& savedAnswers)
+void ExamAttempt::restoreSavedState(bool wasStarted,bool wasSubmitted,int savedQuestionIndex,const std::vector<Answer>& savedAnswers)
 {
     if (wasSubmitted && !wasStarted) {
         throw std::invalid_argument("A submitted attempt must have been started.");

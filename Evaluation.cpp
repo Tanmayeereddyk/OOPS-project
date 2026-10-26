@@ -89,9 +89,7 @@ double enterSubjectiveMarks(double maxMarks)
 }
 } // End anonymous namespace
 // Evaluate a submitted attempt and return its total marks.
-double Evaluation::evaluateAttempt(
-    ExamAttempt& attempt,
-    const Exam& exam)
+double Evaluation::evaluateAttempt(ExamAttempt& attempt,const Exam& exam)
 {
     if (!attempt.isSubmitted()) {
         throw std::logic_error(
