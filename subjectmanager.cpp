@@ -1,12 +1,64 @@
-#include "SubjectManager.h"
-#include "Validation.h"
-#include <filesystem>
+#include "subjectmanager.h"
+#include "validation.h"
 #include <fstream>
 #include <iostream>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <cerrno>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
 //Small constants
 namespace {
 const int START_ID = 201;
 const std::string ID_HEADER = "NEXT_ID|";
+
+bool ensureDirectoryExists(const std::string& directory) {
+#ifdef _WIN32
+    std::wstring path(directory.begin(), directory.end());
+    DWORD attributes = GetFileAttributesW(path.c_str());
+    if (attributes != INVALID_FILE_ATTRIBUTES) {
+        return (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    }
+
+    const std::string::size_type separator = directory.find_last_of("/\\");
+    if (separator != std::string::npos && separator + 1 < directory.size()) {
+        const std::string parent = directory.substr(0, separator);
+        if (!parent.empty() && !ensureDirectoryExists(parent)) {
+            return false;
+        }
+    }
+    return CreateDirectoryW(path.c_str(), NULL) ||
+           GetLastError() == ERROR_ALREADY_EXISTS;
+#else
+    struct stat info;
+    if (stat(directory.c_str(), &info) == 0) {
+        return S_ISDIR(info.st_mode);
+    }
+
+    const std::string::size_type separator = directory.find_last_of("/\\");
+    if (separator != std::string::npos && separator + 1 < directory.size()) {
+        const std::string parent = directory.substr(0, separator);
+        if (!parent.empty() && !ensureDirectoryExists(parent)) {
+            return false;
+        }
+    }
+    if (mkdir(directory.c_str(), 0777) == 0) {
+        return true;
+    }
+    return errno == EEXIST && stat(directory.c_str(), &info) == 0 &&
+           S_ISDIR(info.st_mode);
+#endif
+}
+
+bool ensureParentDirectoryExists(const std::string& filePath) {
+    const std::string::size_type separator = filePath.find_last_of("/\\");
+    if (separator == std::string::npos || separator == 0) {
+        return true;
+    }
+    return ensureDirectoryExists(filePath.substr(0, separator));
+}
 }
 //Constructor
 SubjectManager::SubjectManager(const std::string& filePath) {
@@ -50,11 +102,21 @@ int SubjectManager::addSubject(const Subject& subject) {
     Subject newSubject = subject;
     newSubject.setSubjectId(makeNewId());   // manager gives the ID
     subjects.push_back(newSubject);
+    Subject::registerSubject(newSubject);
     return newSubject.getSubjectId();
 }
 Subject* SubjectManager::findById(int subjectId) {
     for (size_t i = 0; i < subjects.size(); i++) {
         if (subjects[i].getSubjectId() == subjectId) {
+            return &subjects[i];
+        }
+    }
+    return nullptr;
+}
+Subject* SubjectManager::findByName(const std::string& name) {
+    const std::string lookup = Validation::trimText(name);
+    for (size_t i = 0; i < subjects.size(); ++i) {
+        if (Validation::sameIgnoreCase(subjects[i].getSubjectName(), lookup)) {
             return &subjects[i];
         }
     }
@@ -71,6 +133,7 @@ bool SubjectManager::updateSubject(int subjectId, const Subject& newSubject) {
                 return false;
             }
             subjects[i] = updated;
+            Subject::registerSubject(updated);
             return true;
         }
     }
@@ -86,6 +149,7 @@ bool SubjectManager::deleteSubject(int subjectId, const std::function<bool(int)>
                 return false;
             }
             subjects.erase(subjects.begin() + i);
+            Subject::unregisterSubject(subjectId);
             return true;
         }
     }
@@ -115,11 +179,9 @@ void SubjectManager::showAllSubjects() const {
 }
 //File handling
 bool SubjectManager::saveData() const {
-    // Make the folder (for example "data") if it does not exist
-    std::filesystem::path folder = std::filesystem::path(filePath).parent_path();
-    if (!folder.empty()) {
-        std::error_code ec;
-        std::filesystem::create_directories(folder, ec);
+    if (!ensureParentDirectoryExists(filePath)) {
+        std::cout << "Error: could not create the storage directory for " << filePath << ".\n";
+        return false;
     }
     std::ofstream file(filePath);
     if (!file.is_open()) {
@@ -134,6 +196,7 @@ bool SubjectManager::saveData() const {
 }
 bool SubjectManager::loadData() {
     subjects.clear();
+    Subject::clearRegistry();
     nextId = START_ID;
     std::ifstream file(filePath);
     if (!file.is_open()) {
@@ -166,6 +229,7 @@ bool SubjectManager::loadData() {
             continue;
         }
         subjects.push_back(s);
+        Subject::registerSubject(s);
         if (s.getSubjectId() > highestId) {
             highestId = s.getSubjectId();
         }

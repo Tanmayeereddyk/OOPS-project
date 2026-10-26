@@ -1,5 +1,6 @@
 
 #include "examattempt.h"
+#include "AttemptStorage.h"
 #include "student.h"
 #include "Exam.h"
 #include "Question.h"
@@ -10,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <stdexcept>
 // Constructor
 ExamAttempt::ExamAttempt(int attemptId, const Student& student, const Exam& exam)
@@ -22,6 +24,29 @@ ExamAttempt::ExamAttempt(int attemptId, const Student& student, const Exam& exam
       started(false),
       submitted(false)
 {
+}
+
+const char* ExamAttempt::defaultAttemptFilePath()
+{
+    return AttemptStorage::defaultFilePath();
+}
+
+void ExamAttempt::restoreSavedState(bool wasStarted,
+                                    bool wasSubmitted,
+                                    int savedQuestionIndex,
+                                    const std::vector<Answer>& savedAnswers)
+{
+    if (wasSubmitted && !wasStarted) {
+        throw std::invalid_argument("A submitted attempt must have been started.");
+    }
+    if (savedQuestionIndex < 0) {
+        throw std::invalid_argument("Saved question index cannot be negative.");
+    }
+
+    started = wasStarted;
+    submitted = wasSubmitted;
+    currentQuestionIndex = savedQuestionIndex;
+    answers = savedAnswers;
 }
 
 // Start the examination
@@ -241,6 +266,7 @@ bool ExamAttempt::saveAttempt(const std::string& filename) const
          << started << ' '
          << submitted << ' '
          << currentQuestionIndex << '\n';
+    file << std::setprecision(std::numeric_limits<double>::max_digits10);
     for (const auto& answer : answers) {
         file << "ANSWER "
              << answer.questionId << ' '
@@ -260,6 +286,11 @@ bool ExamAttempt::saveAttempt(const std::string& filename) const
               << filename << ".\n";
 
     return true;
+}
+
+bool ExamAttempt::saveAttempt() const
+{
+    return saveAttempt(defaultAttemptFilePath());
 }
 
 std::vector<Answer>&

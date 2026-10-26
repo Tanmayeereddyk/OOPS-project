@@ -3,7 +3,7 @@
 #include <functional>
 #include <string>
 #include <vector>
-#include "Student.h"
+#include "student.h"
 class StudentManager {
 private:
     std::vector<Student> students;   // list of all students
@@ -25,6 +25,10 @@ public:
     int addStudent(const Student& student);                 // returns new ID or -1
     Student* findById(int studentId);                       // nullptr if not found
     Student* findByRollNo(int rollNo);                      // nullptr if not found
+    std::vector<Student> findByClassAndSection(const std::string& studentClass,
+                                               const std::string& section) const;
+    std::vector<Student> getStudentsByClassAndSection(const std::string& studentClass,
+                                                      const std::string& section) const;
     bool updateStudent(int studentId, const Student& newStudent);
     bool deleteStudent(int studentId, const std::function<bool(int)>& hasLinks);
     bool studentExists(int studentId) const;

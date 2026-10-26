@@ -3,7 +3,7 @@
 #include <functional>
 #include <string>
 #include <vector>
-#include "Subject.h"
+#include "subject.h"
 class SubjectManager {
 private:
     std::vector<Subject> subjects;   // list of all subjects
@@ -22,6 +22,7 @@ public:
     SubjectManager(const std::string& filePath);
     int addSubject(const Subject& subject);                 // returns new ID or -1
     Subject* findById(int subjectId);                       // nullptr if not found
+    Subject* findByName(const std::string& name);
     bool updateSubject(int subjectId, const Subject& newSubject);
     bool deleteSubject(int subjectId, const std::function<bool(int)>& hasLinks);
     bool subjectExists(int subjectId) const;

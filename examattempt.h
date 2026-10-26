@@ -23,9 +23,16 @@ private:
     bool submitted;
 
 public:
+    static const char* defaultAttemptFilePath();
+
     ExamAttempt(int attemptId,
                 const Student& student,
                 const Exam& exam);
+
+    void restoreSavedState(bool wasStarted,
+                           bool wasSubmitted,
+                           int savedQuestionIndex,
+                           const std::vector<Answer>& savedAnswers);
 
     void startExam();
     void displayCurrentQuestion();
@@ -49,6 +56,7 @@ public:
     std::vector<Answer>& getAnswersForEvaluation();
 
     bool saveAttempt(const std::string& filename) const;
+    bool saveAttempt() const;
 };
 
 #endif

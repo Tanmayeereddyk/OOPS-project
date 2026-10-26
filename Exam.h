@@ -12,11 +12,11 @@ class Exam
 {
 private:
     int examId;
-    int subjectId;
     std::string title;
     std::string subject;
     std::string date;
     int time;                    // Duration in minutes
+    int subjectId;
     double maxMarks;             // Calculated from questions
 
     std::vector<std::unique_ptr<Question>> questions;

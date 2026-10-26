@@ -1,5 +1,6 @@
-#include "Subject.h"
-#include "Validation.h"
+#include "subject.h"
+#include "validation.h"
+#include <cctype>
 #include <vector>
 //Small helper (only used inside this file)
 namespace {
@@ -13,7 +14,19 @@ bool toNumber(const std::string& text, int& number) {
         return false;
     }
 }
-    std::vector<Subject> subjectRegistry;
+
+std::vector<Subject>& subjectRegistry() {
+    static std::vector<Subject> registry;
+    return registry;
+}
+
+std::string normalizeSubjectName(const std::string& text) {
+    std::string normalized = Validation::trimText(text);
+    for (char& ch : normalized) {
+        ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+    }
+    return normalized;
+}
 }
 //Constructors
 Subject::Subject() {
@@ -27,6 +40,37 @@ Subject::Subject(int subjectId, const std::string& subjectName) {
     setSubjectId(subjectId);
     setSubjectName(subjectName);
 }
+
+void Subject::registerSubject(const Subject& subject) {
+    if (subject.getSubjectId() <= 0 || subject.getSubjectName().empty()) {
+        return;
+    }
+
+    std::vector<Subject>& registry = subjectRegistry();
+    for (Subject& existing : registry) {
+        if (existing.getSubjectId() == subject.getSubjectId()) {
+            existing = subject;
+            return;
+        }
+    }
+    registry.push_back(subject);
+}
+
+void Subject::unregisterSubject(int subjectId) {
+    std::vector<Subject>& registry = subjectRegistry();
+    for (std::vector<Subject>::iterator it = registry.begin();
+         it != registry.end(); ++it) {
+        if (it->getSubjectId() == subjectId) {
+            registry.erase(it);
+            return;
+        }
+    }
+}
+
+void Subject::clearRegistry() {
+    subjectRegistry().clear();
+}
+
 //Getters
 int Subject::getSubjectId() const { return subjectId; }
 std::string Subject::getSubjectName() const { return subjectName; }
@@ -80,10 +124,11 @@ bool Subject::fromLine(const std::string& line, Subject& subject) {
 
 //to help in exam class
 int Subject::findSubjectIdByName(const std::string& subjectName) {
-    subjectName=subjectName.tolower();//from the exam class
-    for (const Subject& subject : subjectRegistry) {
-        subj_name=subject.getSubjectName();//from subject class
-        if (subj_name == subjectName) {
+    const std::string normalized = normalizeSubjectName(subjectName);
+    const std::vector<Subject>& registry = subjectRegistry();
+
+    for (const Subject& subject : registry) {
+        if (normalizeSubjectName(subject.getSubjectName()) == normalized) {
             return subject.getSubjectId();
         }
     }

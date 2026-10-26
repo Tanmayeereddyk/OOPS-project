@@ -1,5 +1,5 @@
-#include "Student.h"
-#include "Validation.h"
+#include "student.h"
+#include "validation.h"
 #include <sstream>
 #include <vector>
 //helpers functions (only used inside this file)

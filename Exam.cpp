@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include <limits>
 #include <stdexcept>
 #include <cctype>
@@ -57,6 +58,7 @@ Exam::Exam(int id)
       subject(""),
       date(""),
       time(0),
+      subjectId(-1),
       maxMarks(0.0),
       questions()
 {
@@ -101,6 +103,7 @@ void Exam::saveExamToFile() const
     if (!out.is_open())
         throw runtime_error("Could not open exam file for saving.");
 
+    out << setprecision(numeric_limits<double>::max_digits10);
     out << "EXAM\n";
     out << examId << '\n';
     out << title << '\n';
