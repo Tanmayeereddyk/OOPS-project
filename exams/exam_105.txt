@@ -5,3 +5,27 @@ Computer Science
 2026-10-26
 30
 QUESTIONS
+MCQ
+1
+Which of the following is a core pillar of OOP?
+5
+Encapsulation
+Compilation
+Execution
+Linking
+1
+TRUE_FALSE
+2
+Inheritance allows a class to acquire features from another class.
+5
+true
+FILL_BLANK
+3
+A class is a _____ for creating objects.
+5
+blueprint
+SUBJECTIVE
+4
+Explain encapsulation in object-oriented programming.
+10
+Encapsulation combines data and methods in a class and controls access to an object's data.

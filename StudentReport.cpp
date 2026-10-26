@@ -38,11 +38,7 @@ bool hasNoTrailingData(std::istringstream& line) {
     return line.eof();
 }
 
-AttemptLookupStatus loadAttemptForStudent(const std::string& filePath,
-                                         int studentId,
-                                         int examId,
-                                         SavedAttempt& saved,
-                                         bool& matchingAttemptSeen) {
+AttemptLookupStatus loadAttemptForStudent(const std::string& filePath, int studentId, int examId, SavedAttempt& saved, bool& matchingAttemptSeen) {
     if (filePath.empty()) {
         return AttemptLookupStatus::invalid;
     }
@@ -78,12 +74,7 @@ AttemptLookupStatus loadAttemptForStudent(const std::string& filePath,
             int submittedFlag = -1;
             int recordStudentId = 0;
             int recordExamId = 0;
-            if (!(record >> current.attemptId
-                         >> recordStudentId
-                         >> recordExamId
-                         >> startedFlag
-                         >> submittedFlag
-                         >> current.currentQuestionIndex)) {
+            if (!(record >> current.attemptId >> recordStudentId >> recordExamId >> startedFlag >> submittedFlag >> current.currentQuestionIndex)) {
                 return AttemptLookupStatus::invalid;
             }
             currentMatches = recordStudentId == studentId && recordExamId == examId;
@@ -115,9 +106,7 @@ AttemptLookupStatus loadAttemptForStudent(const std::string& filePath,
             }
             record >> std::ws;
             if (record.peek() != '"' ||
-                !(record >> std::quoted(response)
-                         >> marksAwarded
-                         >> evaluatedFlag) ||
+                !(record >> std::quoted(response) >> marksAwarded >> evaluatedFlag) ||
                 !hasNoTrailingData(record) ||
                 questionId <= 0 ||
                 response.empty() ||

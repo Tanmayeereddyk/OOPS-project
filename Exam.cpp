@@ -47,7 +47,6 @@ Exam::Exam(int id,
     if (time <= 0)
         throw invalid_argument("Exam duration must be greater than zero.");
 
-    createExamFile();
 }
 
 

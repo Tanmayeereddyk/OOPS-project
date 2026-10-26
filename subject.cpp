@@ -2,7 +2,7 @@
 #include "validation.h"
 #include <cctype>
 #include <vector>
-//Small helper (only used inside this file)
+
 namespace {
 // Converts text to a whole number. Returns false if the text is not a number.
 bool toNumber(const std::string& text, int& number) {

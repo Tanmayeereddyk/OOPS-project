@@ -43,9 +43,7 @@ public:
         std::ostream& out = std::cout,
         const std::string& attemptFilePath = AttemptStorage::defaultFilePath());
 
-    bool generateReport(int studentId, int examId,
-                        std::ostream& out = std::cout,
-                        const std::string& attemptFilePath = AttemptStorage::defaultFilePath()) const;
+    bool generateReport(int studentId, int examId, std::ostream& out = std::cout, const std::string& attemptFilePath = AttemptStorage::defaultFilePath()) const;
 };
 
 #endif

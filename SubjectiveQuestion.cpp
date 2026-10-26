@@ -6,10 +6,7 @@
 using namespace std;
 
 // Constructor
-SubjectiveQuestion::SubjectiveQuestion(int id,
-                                       const string& text,
-                                       double marks,
-                                       const string& answer)
+SubjectiveQuestion::SubjectiveQuestion(int id, const string& text, double marks, const string& answer)
     : Question(id, text, marks),
       modelAnswer(answer)
 {
