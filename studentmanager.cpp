@@ -168,12 +168,10 @@ Student* StudentManager::findByRollNo(int rollNo) {
     }
     return nullptr;
 }
-std::vector<Student> StudentManager::findByClassAndSection(const std::string& studentClass,
-                                                         const std::string& section) const {
+std::vector<Student> StudentManager::findByClassAndSection(const std::string& studentClass,const std::string& section) const {
     std::vector<Student> matches;
     const std::string targetClass = Validation::trimText(studentClass);
     const std::string targetSection = Validation::trimText(section);
-
     for (const Student& student : students) {
         if (Validation::sameIgnoreCase(student.getClassName(), targetClass) &&
             Validation::sameIgnoreCase(student.getSection(), targetSection)) {
@@ -182,8 +180,7 @@ std::vector<Student> StudentManager::findByClassAndSection(const std::string& st
     }
     return matches;
 }
-std::vector<Student> StudentManager::getStudentsByClassAndSection(const std::string& studentClass,
-                                                                const std::string& section) const {
+std::vector<Student> StudentManager::getStudentsByClassAndSection(const std::string& studentClass,const std::string& section) const {
     return findByClassAndSection(studentClass, section);
 }
 bool StudentManager::updateStudent(int studentId, const Student& newStudent) {

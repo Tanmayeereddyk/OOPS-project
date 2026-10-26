@@ -1,12 +1,10 @@
 #include "StudentReport.h"
-
 #include "studentmanager.h"
 #include "subjectmanager.h"
 #include "GradingSystem.h"
 #include "Evaluation.h"
 #include "Exam.h"
 #include "examattempt.h"
-
 #include <cerrno>
 #include <cmath>
 #include <fstream>
@@ -16,15 +14,12 @@
 #include <stdexcept>
 #include <sys/stat.h>
 #include <vector>
-
 namespace {
-
 enum class AttemptLookupStatus {
     found,
     notFound,
     invalid
 };
-
 struct SavedAttempt {
     int attemptId = 0;
     bool started = false;
@@ -32,17 +27,19 @@ struct SavedAttempt {
     int currentQuestionIndex = 0;
     std::vector<Answer> answers;
 };
-
 bool hasNoTrailingData(std::istringstream& line) {
     line >> std::ws;
     return line.eof();
 }
+<<<<<<< HEAD
 
 AttemptLookupStatus loadAttemptForStudent(const std::string& filePath, int studentId, int examId, SavedAttempt& saved, bool& matchingAttemptSeen) {
+=======
+AttemptLookupStatus loadAttemptForStudent(const std::string& filePath,int studentId,int examId,SavedAttempt& saved,bool& matchingAttemptSeen) {
+>>>>>>> 02e772a6c4a9b57230baf33aa5936688f6e01ba8
     if (filePath.empty()) {
         return AttemptLookupStatus::invalid;
     }
-
     std::ifstream input(filePath.c_str());
     if (!input.is_open()) {
         struct stat fileInfo;
@@ -51,25 +48,21 @@ AttemptLookupStatus loadAttemptForStudent(const std::string& filePath, int stude
         }
         return AttemptLookupStatus::invalid;
     }
-
     bool insideAttempt = false;
     bool currentMatches = false;
     bool matchingAttemptFound = false;
     SavedAttempt current;
     std::string line;
-
     while (std::getline(input, line)) {
         std::istringstream record(line);
         std::string marker;
         if (!(record >> marker)) {
             return AttemptLookupStatus::invalid;
         }
-
         if (marker == "ATTEMPT") {
             if (insideAttempt) {
                 return AttemptLookupStatus::invalid;
             }
-
             int startedFlag = -1;
             int submittedFlag = -1;
             int recordStudentId = 0;
@@ -88,14 +81,12 @@ AttemptLookupStatus loadAttemptForStudent(const std::string& filePath, int stude
                 current.currentQuestionIndex < 0) {
                 return AttemptLookupStatus::invalid;
             }
-
             current.started = startedFlag == 1;
             current.submitted = submittedFlag == 1;
             current.answers.clear();
             insideAttempt = true;
             continue;
         }
-
         if (marker == "ANSWER") {
             int questionId = 0;
             int evaluatedFlag = -1;
@@ -123,7 +114,6 @@ AttemptLookupStatus loadAttemptForStudent(const std::string& filePath, int stude
             }
             continue;
         }
-
         if (marker == "END_ATTEMPT") {
             if (!insideAttempt || !hasNoTrailingData(record)) {
                 return AttemptLookupStatus::invalid;
@@ -139,23 +129,17 @@ AttemptLookupStatus loadAttemptForStudent(const std::string& filePath, int stude
             currentMatches = false;
             continue;
         }
-
         return AttemptLookupStatus::invalid;
     }
-
     if (input.bad() || insideAttempt) {
         return AttemptLookupStatus::invalid;
     }
-    return matchingAttemptFound
-        ? AttemptLookupStatus::found
-        : AttemptLookupStatus::notFound;
+    return matchingAttemptFound? AttemptLookupStatus::found: AttemptLookupStatus::notFound;
 }
-
 bool validateRecordedMarks(const SavedAttempt& saved, const Exam& exam) {
     if (!saved.started || !saved.submitted || saved.answers.empty()) {
         return false;
     }
-
     std::vector<int> seenQuestionIds;
     const auto& questions = exam.getQuestions();
     if ((questions.empty() && saved.currentQuestionIndex != 0) ||
@@ -172,7 +156,6 @@ bool validateRecordedMarks(const SavedAttempt& saved, const Exam& exam) {
                 return false;
             }
         }
-
         const Question* matchingQuestion = nullptr;
         for (const auto& question : questions) {
             if (question->getQuestionId() == answer.questionId) {
@@ -188,11 +171,8 @@ bool validateRecordedMarks(const SavedAttempt& saved, const Exam& exam) {
     }
     return true;
 }
-
 } // namespace
-
 StudentReport::StudentReport() {}
-
 StudentReportStatus StudentReport::getStudentExamSummary(
     int studentId,
     int examId,
@@ -201,22 +181,18 @@ StudentReportStatus StudentReport::getStudentExamSummary(
     const std::string& attemptFilePath) {
     (void)out;
     summary = StudentExamSummary();
-
     StudentManager studentManager("data/students.txt");
     studentManager.loadData();
-
     Student* student = studentManager.findById(studentId);
     if (student == nullptr) {
         return StudentReportStatus::studentNotFound;
     }
-
     std::unique_ptr<Exam> exam;
     try {
         exam.reset(new Exam(examId));
     } catch (const std::exception&) {
         return StudentReportStatus::examNotFound;
     }
-
     try {
         summary.studentId = student->getStudentId();
         summary.fullName = student->getFullName();
@@ -227,7 +203,6 @@ StudentReportStatus StudentReport::getStudentExamSummary(
         summary.examName = exam->getExamName();
         summary.subjectName = exam->getSubject();
         summary.maximumMarks = exam->getTotalMarks();
-
         SubjectManager subjectManager("data/subjects.txt");
         subjectManager.loadData();
         Subject* subject = subjectManager.findByName(exam->getSubject());
@@ -236,7 +211,6 @@ StudentReportStatus StudentReport::getStudentExamSummary(
             return summary.status;
         }
         summary.subjectName = subject->getSubjectName();
-
         SavedAttempt saved;
         bool matchingAttemptSeen = false;
         AttemptLookupStatus lookup = loadAttemptForStudent(
@@ -256,14 +230,11 @@ StudentReportStatus StudentReport::getStudentExamSummary(
             summary.grade.clear();
             return summary.status;
         }
-
         ExamAttempt attempt(saved.attemptId, *student, *exam);
         attempt.restoreSavedState(saved.started, saved.submitted,
                                   saved.currentQuestionIndex, saved.answers);
-
         Evaluation evaluator;
         summary.marksObtained = evaluator.evaluateAttempt(attempt, *exam);
-
         GradingSystem grading;
         if (!grading.calculatePercentage(summary.marksObtained,
                                          summary.maximumMarks,
@@ -275,7 +246,6 @@ StudentReportStatus StudentReport::getStudentExamSummary(
             summary.grade.clear();
             return summary.status;
         }
-
         summary.attempted = true;
         summary.status = StudentReportStatus::validAttempt;
         return summary.status;
@@ -286,7 +256,6 @@ StudentReportStatus StudentReport::getStudentExamSummary(
         return summary.status;
     }
 }
-
 bool StudentReport::generateReport(int studentId,
                                    int examId,
                                    std::ostream& out,
@@ -308,7 +277,6 @@ bool StudentReport::generateReport(int studentId,
         out << "Could not prepare the report for the selected student and exam.\n";
         return false;
     }
-
     out << "\n================ STUDENT REPORT ================\n";
     out << "Student ID : " << summary.studentId << "\n";
     out << "Full Name  : " << summary.fullName << "\n";
@@ -319,7 +287,6 @@ bool StudentReport::generateReport(int studentId,
     out << "Exam Name  : " << summary.examName << "\n";
     out << "Subject    : " << summary.subjectName << "\n";
     out << "Max Marks  : " << summary.maximumMarks << "\n\n";
-
     if (status == StudentReportStatus::noAttempt) {
         out << "Attempt status: Not attempted\n";
         out << "Grade         : Not available\n";

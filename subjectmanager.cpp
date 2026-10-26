@@ -13,7 +13,6 @@
 namespace {
 const int START_ID = 201;
 const std::string ID_HEADER = "NEXT_ID|";
-
 bool ensureDirectoryExists(const std::string& directory) {
 #ifdef _WIN32
     std::wstring path(directory.begin(), directory.end());
@@ -21,7 +20,6 @@ bool ensureDirectoryExists(const std::string& directory) {
     if (attributes != INVALID_FILE_ATTRIBUTES) {
         return (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
     }
-
     const std::string::size_type separator = directory.find_last_of("/\\");
     if (separator != std::string::npos && separator + 1 < directory.size()) {
         const std::string parent = directory.substr(0, separator);
@@ -36,7 +34,6 @@ bool ensureDirectoryExists(const std::string& directory) {
     if (stat(directory.c_str(), &info) == 0) {
         return S_ISDIR(info.st_mode);
     }
-
     const std::string::size_type separator = directory.find_last_of("/\\");
     if (separator != std::string::npos && separator + 1 < directory.size()) {
         const std::string parent = directory.substr(0, separator);
@@ -51,7 +48,6 @@ bool ensureDirectoryExists(const std::string& directory) {
            S_ISDIR(info.st_mode);
 #endif
 }
-
 bool ensureParentDirectoryExists(const std::string& filePath) {
     const std::string::size_type separator = filePath.find_last_of("/\\");
     if (separator == std::string::npos || separator == 0) {
