@@ -1,6 +1,4 @@
-
 #include "Answer.h"
-
 // Constructor definition
 Answer::Answer(int id,
                const std::string& studentResponse,

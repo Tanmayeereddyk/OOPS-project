@@ -14,12 +14,10 @@ bool toNumber(const std::string& text, int& number) {
         return false;
     }
 }
-
 std::vector<Subject>& subjectRegistry() {
     static std::vector<Subject> registry;
     return registry;
 }
-
 std::string normalizeSubjectName(const std::string& text) {
     std::string normalized = Validation::trimText(text);
     for (char& ch : normalized) {
@@ -40,12 +38,10 @@ Subject::Subject(int subjectId, const std::string& subjectName) {
     setSubjectId(subjectId);
     setSubjectName(subjectName);
 }
-
 void Subject::registerSubject(const Subject& subject) {
     if (subject.getSubjectId() <= 0 || subject.getSubjectName().empty()) {
         return;
     }
-
     std::vector<Subject>& registry = subjectRegistry();
     for (Subject& existing : registry) {
         if (existing.getSubjectId() == subject.getSubjectId()) {
@@ -55,7 +51,6 @@ void Subject::registerSubject(const Subject& subject) {
     }
     registry.push_back(subject);
 }
-
 void Subject::unregisterSubject(int subjectId) {
     std::vector<Subject>& registry = subjectRegistry();
     for (std::vector<Subject>::iterator it = registry.begin();
@@ -66,11 +61,9 @@ void Subject::unregisterSubject(int subjectId) {
         }
     }
 }
-
 void Subject::clearRegistry() {
     subjectRegistry().clear();
 }
-
 //Getters
 int Subject::getSubjectId() const { return subjectId; }
 std::string Subject::getSubjectName() const { return subjectName; }
@@ -121,7 +114,6 @@ bool Subject::fromLine(const std::string& line, Subject& subject) {
     subject = Subject(id, nameText);
     return true;
 }
-
 //to help in exam class
 int Subject::findSubjectIdByName(const std::string& subjectName) {
     const std::string normalized = normalizeSubjectName(subjectName);
@@ -132,6 +124,5 @@ int Subject::findSubjectIdByName(const std::string& subjectName) {
             return subject.getSubjectId();
         }
     }
-
     return -1;
 }

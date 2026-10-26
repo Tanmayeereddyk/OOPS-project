@@ -10,12 +10,10 @@ public:
     // Constructors
     Subject();
     Subject(int subjectId, const std::string& subjectName);
-
     static int findSubjectIdByName(const std::string& subjectName);
     static void registerSubject(const Subject& subject);
     static void unregisterSubject(int subjectId);
     static void clearRegistry();
-
     // Getters
     int getSubjectId() const;
     std::string getSubjectName() const;

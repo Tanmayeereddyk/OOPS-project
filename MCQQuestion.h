@@ -1,7 +1,5 @@
-
 #ifndef MCQQUESTION_H
 #define MCQQUESTION_H
-
 #include "Question.h"
 #include <vector>
 #include <string>
@@ -11,7 +9,6 @@ class MCQQuestion : public Question
 private:
     vector<string> options;
     int correctOption;//1 based index of the correct option (1, 2, 3, or 4)
-
 public:
     // Constructor
     MCQQuestion(int id,
@@ -24,12 +21,8 @@ public:
     void display(ostream& out) const override;
     void input(istream& in) override;
     void saveToFile(ostream& out) const override;
-
-
-
     // Getter functions
     vector<string> getOptions() const;
     int getCorrectOption() const;
 };
-
 #endif
