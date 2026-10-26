@@ -1,471 +1,434 @@
-#include <iostream>
-#include <string>
-#include <limits>
-#include <memory>
+#include <algorithm>
+#include <cmath>
+#include <dirent.h>
+#include <fstream>
 #include <iomanip>
-#include <cctype>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
-#include "Exam.h"
-#include "StudentManager.h"
-#include "student.h"
-#include "Question.h"
-#include "MCQQuestion.h"
-#include "TrueFalseQuestion.h"
-#include "FillBlankQuestion.h"
-#include "SubjectiveQuestion.h"
-#include "Answer.h"
-#include "GradingSystem.h"
-#include "ExamAttempt.h"
 #include "AttemptStorage.h"
+#include "ClassReport.h"
+#include "Evaluation.h"
+#include "Exam.h"
+#include "examattempt.h"
+#include "FillBlankQuestion.h"
+#include "GradingSystem.h"
+#include "MCQQuestion.h"
+#include "Question.h"
 #include "StudentReport.h"
+#include "TrueFalseQuestion.h"
+#include "SubjectiveQuestion.h"
+#include "studentmanager.h"
+#include "subjectmanager.h"
+#include "validation.h"
 
-using namespace std;
+namespace {
 
-int main()
-{
-    // --------------------------------------------------
-    // 1. CREATE EXAM
-    // --------------------------------------------------
+const std::string STUDENT_FILE = "data/students.txt";
+const std::string SUBJECT_FILE = "data/subjects.txt";
+const std::string EXAM_DIRECTORY = "exams";
 
-    Exam exam(
-        105,
-        "C++ Object-Oriented Programming Test",
-        "Computer Science",
-        "2026-10-26",
-        30
-    );
+double readNonNegativeDouble(const std::string& prompt) {
+    while (true) {
+        std::cout << prompt;
+        std::string line;
+        if (!std::getline(std::cin, line)) {
+            throw std::runtime_error("Input ended while reading a number.");
+        }
 
-    // Question 1: MCQ
-    vector<string> options = {
-        "Encapsulation",
-        "Compilation",
-        "Execution",
-        "Linking"
-    };
+        std::istringstream input(line);
+        double value = 0.0;
+        if ((input >> value) && (input >> std::ws).eof() &&
+            std::isfinite(value) && value >= 0.0) {
+            return value;
+        }
+        std::cout << "Enter a finite number greater than or equal to zero.\n";
+    }
+}
 
-    exam.addQuestion(unique_ptr<Question>(new MCQQuestion(
-        1,
-        "Which of the following is a pillar of OOP?",
-        5.0,
-        options,
-        1
-    )));
-
-    // Question 2: True/False
-    exam.addQuestion(unique_ptr<Question>(new TrueFalseQuestion(
-        2,
-        "Inheritance allows a class to acquire properties "
-        "and methods from another class.",
-        5.0,
-        true
-    )));
-
-    // Question 3: Fill in the blank
-    exam.addQuestion(unique_ptr<Question>(new FillBlankQuestion(
-        3,
-        "A class is a _____ for creating objects.",
-        5.0,
-        "blueprint"
-    )));
-
-    // Question 4: Subjective
-    exam.addQuestion(unique_ptr<Question>(new SubjectiveQuestion(
-        4,
-        "Explain encapsulation in object-oriented programming.",
-        10.0,
-        "Encapsulation combines data and methods into a class "
-        "and restricts direct access to internal data."
-    )));
-
-    // --------------------------------------------------
-    // 2. LOAD STUDENTS
-    // --------------------------------------------------
-
-    StudentManager studentManager("data/students.txt");
-
-    if (!studentManager.loadData())
-    {
-        cerr << "Error: Could not load student data.\n";
-        return 1;
+std::vector<int> getExamIds() {
+    std::vector<int> examIds;
+    DIR* directory = opendir(EXAM_DIRECTORY.c_str());
+    if (directory == nullptr) {
+        return examIds;
     }
 
-    StudentReport report;
-
-    // --------------------------------------------------
-    // 3. MAIN MENU
-    // --------------------------------------------------
-
-    int choice;
-
-    do
-    {
-        cout << "\n========================================\n";
-        cout << "       EXAMINATION & GRADING SYSTEM\n";
-        cout << "========================================\n";
-        cout << "1. Take Examination\n";
-        cout << "2. View Student Report / Grade\n";
-        cout << "3. Exit\n";
-        cout << "========================================\n";
-        cout << "Enter your choice: ";
-
-        if (!(cin >> choice))
-        {
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << "Invalid input. Enter a number.\n";
+    const std::string prefix = "exam_";
+    const std::string suffix = ".txt";
+    struct dirent* entry = nullptr;
+    while ((entry = readdir(directory)) != nullptr) {
+        const std::string filename(entry->d_name);
+        if (filename.size() <= prefix.size() + suffix.size() ||
+            filename.compare(0, prefix.size(), prefix) != 0 ||
+            filename.compare(filename.size() - suffix.size(), suffix.size(), suffix) != 0) {
             continue;
         }
 
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        const std::string idText = filename.substr(
+            prefix.size(), filename.size() - prefix.size() - suffix.size()
+        );
+        std::istringstream parser(idText);
+        int examId = 0;
+        if ((parser >> examId) && (parser >> std::ws).eof() && examId > 0) {
+            examIds.push_back(examId);
+        }
+    }
+    closedir(directory);
+    std::sort(examIds.begin(), examIds.end());
+    return examIds;
+}
 
-        switch (choice)
-        {
-            // ==========================================
-            // OPTION 1: TAKE EXAMINATION
-            // ==========================================
-            case 1:
-            {
-                int studentId;
+void showExams() {
+    const std::vector<int> examIds = getExamIds();
+    if (examIds.empty()) {
+        std::cout << "No exam files were found in " << EXAM_DIRECTORY << ".\n";
+        return;
+    }
 
-                cout << "\nEnter Student ID: ";
+    std::cout << "\n========== AVAILABLE EXAMS ==========\n";
+    for (int id : examIds) {
+        try {
+            Exam exam(id);
+            std::cout << "ID: " << exam.getExamId()
+                      << " | Title: " << exam.getExamName()
+                      << " | Subject: " << exam.getSubject()
+                      << " | Date: " << exam.getDate()
+                      << " | Duration: " << exam.getDuration() << " minutes"
+                      << " | Marks: " << exam.getTotalMarks() << '\n';
+        } catch (const std::exception& error) {
+            std::cout << "Exam " << id << " could not be loaded: "
+                      << error.what() << '\n';
+        }
+    }
+    std::cout << "=====================================\n";
+}
 
-                if (!(cin >> studentId))
-                {
-                    cin.clear();
-                    cin.ignore(
-                        numeric_limits<streamsize>::max(), '\n'
-                    );
-                    cout << "Invalid student ID.\n";
-                    break;
-                }
+bool hasSavedAttempt(int studentId, int examId, bool matchExam) {
+    std::ifstream input(AttemptStorage::defaultFilePath());
+    if (!input.is_open()) {
+        return false;
+    }
 
-                cin.ignore(
-                    numeric_limits<streamsize>::max(), '\n'
-                );
+    std::string line;
+    while (std::getline(input, line)) {
+        std::istringstream record(line);
+        std::string marker;
+        int attemptId = 0;
+        int savedStudentId = 0;
+        int savedExamId = 0;
+        int started = 0;
+        int submitted = 0;
+        int questionIndex = 0;
+        if (!(record >> marker) || marker != "ATTEMPT") {
+            continue;
+        }
+        if (!(record >> attemptId >> savedStudentId >> savedExamId
+                     >> started >> submitted >> questionIndex)) {
+            // Treat an unreadable attempt header conservatively for deletion.
+            return true;
+        }
+        if (savedStudentId == studentId &&
+            (!matchExam || savedExamId == examId)) {
+            return true;
+        }
+    }
+    return false;
+}
 
-                Student* student =
-                    studentManager.findById(studentId);
+bool subjectHasExam(int subjectId, SubjectManager& subjects) {
+    Subject* subject = subjects.findById(subjectId);
+    if (subject == nullptr) {
+        return true;
+    }
 
-                if (student == nullptr)
-                {
-                    cout << "Student not found.\n";
-                    break;
-                }
-
-                cout << "\nStudent verified.\n";
-                cout << "Exam: "
-                     << exam.getExamName() << '\n';
-
-                // Uses the student ID as the attempt ID.
-                // This simple setup assumes one attempt per student.
-                ExamAttempt attempt(studentId, *student, exam);
-
-                attempt.startExam();
-
-                // Process each question.
-                while (true)
-                {
-                    string response;
-
-                    cout << "\nEnter your answer: ";
-                    getline(cin, response);
-
-                    // Retry the current question if the answer
-                    // could not be recorded.
-                    if (!attempt.acceptAnswer(response))
-                    {
-                        cout << "Could not save answer. "
-                             << "Please try again.\n";
-                        continue;
-                    }
-
-                    // Move to the next question. If there are no
-                    // more questions, finish the exam loop.
-                    if (!attempt.nextQuestion())
-                    {
-                        break;
-                    }
-                }
-
-                attempt.submitExam();
-
-                // ------------------------------------------
-                // Evaluate objective questions.
-                // Subjective questions remain pending manual
-                // evaluation unless your Evaluation class
-                // supports automatic subjective evaluation.
-                // ------------------------------------------
-
-                auto& answers = attempt.getAnswersForEvaluation();
-
-                double objectiveMarks = 0.0;
-                double pendingMarks = 0.0;
-
-                for (auto& answer : answers)
-                {
-                    switch (answer.questionId)
-                    {
-                        case 1:
-                        {
-                            // MCQ: correct option is option 1.
-                            if (answer.response == "1")
-                            {
-                                answer.marksAwarded = 5.0;
-                            }
-                            else
-                            {
-                                answer.marksAwarded = 0.0;
-                            }
-
-                            answer.evaluated = true;
-                            objectiveMarks += answer.marksAwarded;
-                            break;
-                        }
-
-                        case 2:
-                        {
-                            // True/False: accepted answers are
-                            // true/false, t/f, or 1/0.
-                            string response = answer.response;
-
-                            for (char& ch : response)
-                            {
-                                ch = static_cast<char>(
-                                    tolower(
-                                        static_cast<unsigned char>(ch)
-                                    )
-                                );
-                            }
-
-                            if (response == "true" ||
-                                response == "t" ||
-                                response == "1")
-                            {
-                                answer.marksAwarded = 5.0;
-                            }
-                            else
-                            {
-                                answer.marksAwarded = 0.0;
-                            }
-
-                            answer.evaluated = true;
-                            objectiveMarks += answer.marksAwarded;
-                            break;
-                        }
-
-                        case 3:
-                        {
-                            // Fill-in-the-blank.
-                            string response = answer.response;
-
-                            for (char& ch : response)
-                            {
-                                ch = static_cast<char>(
-                                    tolower(
-                                        static_cast<unsigned char>(ch)
-                                    )
-                                );
-                            }
-
-                            // Trim leading and trailing spaces.
-                            size_t first = response.find_first_not_of(" \t\r\n");
-                            size_t last = response.find_last_not_of(" \t\r\n");
-
-                            if (first == string::npos)
-                            {
-                                response.clear();
-                            }
-                            else
-                            {
-                                response = response.substr(
-                                    first, last - first + 1
-                                );
-                            }
-
-                            if (response == "blueprint")
-                            {
-                                answer.marksAwarded = 5.0;
-                            }
-                            else
-                            {
-                                answer.marksAwarded = 0.0;
-                            }
-
-                            answer.evaluated = true;
-                            objectiveMarks += answer.marksAwarded;
-                            break;
-                        }
-
-                        case 4:
-                        {
-                            // Subjective answer needs manual marking.
-                            answer.marksAwarded = 0.0;
-                            answer.evaluated = false;
-                            pendingMarks += 10.0;
-                            break;
-                        }
-
-                        default:
-                        {
-                            answer.marksAwarded = 0.0;
-                            answer.evaluated = false;
-                            break;
-                        }
-                    }
-                }
-
-                // Save the attempt to attempts.txt.
-                if (attempt.saveAttempt())
-                {
-                    cout << "\nAttempt saved successfully.\n";
-                }
-                else
-                {
-                    cout << "\nError saving attempt.\n";
-                }
-
-                cout << fixed << setprecision(2);
-                cout << "\n========== EXAM SUMMARY ==========\n";
-                cout << "Objective marks: " << objectiveMarks << '\n';
-                cout << "Subjective marks pending: "
-                     << pendingMarks << '\n';
-                cout << "Maximum marks: " << exam.getTotalMarks() << '\n';
-                cout << "==================================\n";
-
-                cout << "Note: The final report may remain invalid "
-                     << "until all answers are evaluated.\n";
-
-                break;
+    const std::vector<int> examIds = getExamIds();
+    for (int id : examIds) {
+        try {
+            Exam exam(id);
+            if (Validation::sameIgnoreCase(exam.getSubject(), subject->getSubjectName())) {
+                return true;
             }
+        } catch (const std::exception&) {
+            // A malformed exam cannot be safely checked for a subject link.
+            return true;
+        }
+    }
+    return false;
+}
 
-            // ==========================================
-            // OPTION 2: VIEW STUDENT REPORT
-            // ==========================================
-            case 2:
-            {
-                int studentId;
-                int examId;
+void manageStudents(StudentManager& students) {
+    students.showMenu([](int studentId) {
+        return hasSavedAttempt(studentId, 0, false);
+    });
+    if (!students.saveData()) {
+        std::cout << "Student records could not be saved.\n";
+    }
+}
 
-                cout << "\nEnter Student ID: ";
+void manageSubjects(SubjectManager& subjects) {
+    subjects.showMenu([&subjects](int subjectId) {
+        return subjectHasExam(subjectId, subjects);
+    });
+    if (!subjects.saveData()) {
+        std::cout << "Subject records could not be saved.\n";
+    }
+}
 
-                if (!(cin >> studentId))
-                {
-                    cin.clear();
-                    cin.ignore(
-                        numeric_limits<streamsize>::max(), '\n'
-                    );
-                    cout << "Invalid student ID.\n";
-                    break;
-                }
+std::unique_ptr<Question> createQuestion() {
+    const int questionId = Validation::readNumber("Question ID: ", 1, 999999);
+    const std::string text = Validation::readText("Question text: ");
+    const double marks = readNonNegativeDouble("Maximum marks: ");
 
-                cout << "Enter Exam ID: ";
+    std::cout << "Question type: 1. MCQ  2. True/False  "
+                 "3. Fill in the blank  4. Subjective\n";
+    const int type = Validation::readNumber("Choose type: ", 1, 4);
 
-                if (!(cin >> examId))
-                {
-                    cin.clear();
-                    cin.ignore(
-                        numeric_limits<streamsize>::max(), '\n'
-                    );
-                    cout << "Invalid exam ID.\n";
-                    break;
-                }
+    if (type == 1) {
+        std::vector<std::string> options;
+        for (int i = 1; i <= 4; ++i) {
+            options.push_back(Validation::readText(
+                "Option " + std::to_string(i) + ": "
+            ));
+        }
+        const int correct = Validation::readNumber("Correct option (1-4): ", 1, 4);
+        return std::unique_ptr<Question>(
+            new MCQQuestion(questionId, text, marks, options, correct)
+        );
+    }
+    if (type == 2) {
+        const int correct = Validation::readNumber(
+            "Correct answer (1. True, 2. False): ", 1, 2
+        );
+        return std::unique_ptr<Question>(
+            new TrueFalseQuestion(questionId, text, marks, correct == 1)
+        );
+    }
+    if (type == 3) {
+        const std::string answer = Validation::readText("Correct answer: ");
+        return std::unique_ptr<Question>(
+            new FillBlankQuestion(questionId, text, marks, answer)
+        );
+    }
 
-                cin.ignore(
-                    numeric_limits<streamsize>::max(), '\n'
-                );
+    const std::string modelAnswer = Validation::readText("Model answer: ");
+    return std::unique_ptr<Question>(
+        new SubjectiveQuestion(questionId, text, marks, modelAnswer)
+    );
+}
 
-                StudentExamSummary summary;
+void createExam(SubjectManager& subjects) {
+    if (subjects.countSubjects() == 0) {
+        std::cout << "Create a subject before creating an exam.\n";
+        return;
+    }
 
-                StudentReportStatus status =
-                    StudentReport::getStudentExamSummary(
-                        studentId,
-                        examId,
-                        summary,
-                        cout,
-                        AttemptStorage::defaultFilePath()
-                    );
+    subjects.showAllSubjects();
+    const int subjectId = Validation::readNumber("Subject ID: ", 1, 999999);
+    Subject* subject = subjects.findById(subjectId);
+    if (subject == nullptr) {
+        std::cout << "Subject not found.\n";
+        return;
+    }
 
-                if (status == StudentReportStatus::validAttempt)
-                {
-                    cout << fixed << setprecision(2);
+    const int examId = Validation::readNumber("New exam ID: ", 1, 999999);
+    const std::string title = Validation::readText("Exam title: ");
+    const std::string date = Validation::readText("Exam date: ");
+    const int duration = Validation::readNumber("Duration in minutes: ", 1, 999999);
 
-                    cout << "\n========== STUDENT REPORT ==========\n";
-                    cout << "Student ID: " << summary.studentId << '\n';
-                    cout << "Student Name: " << summary.fullName << '\n';
-                    cout << "Roll Number: " << summary.rollNo << '\n';
-                    cout << "Class: " << summary.className << '\n';
-                    cout << "Section: " << summary.section << '\n';
+    try {
+        Exam exam(examId, title, subject->getSubjectName(), date, duration);
+        std::cout << "Exam created. Add questions from the exam menu.\n";
+    } catch (const std::exception& error) {
+        std::cout << "Exam could not be created: " << error.what() << '\n';
+    }
+}
 
-                    cout << "\nExam ID: " << summary.examId << '\n';
-                    cout << "Exam Name: " << summary.examName << '\n';
-                    cout << "Subject: " << summary.subjectName << '\n';
+void manageExams(SubjectManager& subjects) {
+    int choice = -1;
+    while (choice != 0) {
+        std::cout << "\n========== EXAM MANAGEMENT ==========\n"
+                     "1. List exams\n"
+                     "2. Create exam\n"
+                     "3. View exam and question paper\n"
+                     "4. Add question to exam\n"
+                     "5. Remove question from exam\n"
+                     "0. Back\n";
+        choice = Validation::readNumber("Choice: ", 0, 5);
 
-                    cout << "\nMaximum Marks: "
-                         << summary.maximumMarks << '\n';
-                    cout << "Marks Obtained: "
-                         << summary.marksObtained << '\n';
-                    cout << "Percentage: "
-                         << summary.percentage << "%\n";
-                    cout << "Grade: " << summary.grade << '\n';
-                    cout << "Result: "
-                         << (summary.passed ? "PASS" : "FAIL")
-                         << '\n';
-
-                    cout << "====================================\n";
-                }
-                else
-                {
-                    cout << "\nCould not generate a valid report.\n";
-
-                    switch (status)
-                    {
-                        case StudentReportStatus::noAttempt:
-                            cout << "Reason: No saved attempt found.\n";
-                            break;
-
-                        case StudentReportStatus::invalidAttempt:
-                            cout << "Reason: The attempt is incomplete "
-                                 << "or contains answers that have not "
-                                 << "been evaluated.\n";
-                            break;
-
-                        case StudentReportStatus::studentNotFound:
-                            cout << "Reason: Student not found.\n";
-                            break;
-
-                        case StudentReportStatus::examNotFound:
-                            cout << "Reason: Exam not found.\n";
-                            break;
-
-                        case StudentReportStatus::subjectNotFound:
-                            cout << "Reason: Subject not found.\n";
-                            break;
-
-                        case StudentReportStatus::validAttempt:
-                            break;
-                    }
-                }
-
-                break;
+        if (choice == 1) {
+            showExams();
+        } else if (choice == 2) {
+            createExam(subjects);
+        } else if (choice == 3) {
+            const int id = Validation::readNumber("Exam ID: ", 1, 999999);
+            try {
+                Exam exam(id);
+                exam.displayExam();
+                exam.displayQuestions();
+            } catch (const std::exception& error) {
+                std::cout << "Exam could not be loaded: " << error.what() << '\n';
             }
-
-            // ==========================================
-            // OPTION 3: EXIT
-            // ==========================================
-            case 3:
-            {
-                cout << "\nExiting Examination & Grading System.\n";
-                break;
+        } else if (choice == 4) {
+            const int id = Validation::readNumber("Exam ID: ", 1, 999999);
+            try {
+                Exam exam(id);
+                std::unique_ptr<Question> question = createQuestion();
+                exam.addQuestion(std::move(question));
+                std::cout << "Question added and exam paper saved.\n";
+            } catch (const std::exception& error) {
+                std::cout << "Question could not be added: " << error.what() << '\n';
             }
-
-            default:
-            {
-                cout << "Invalid choice. Please select 1, 2, or 3.\n";
-                break;
+        } else if (choice == 5) {
+            const int id = Validation::readNumber("Exam ID: ", 1, 999999);
+            const int questionId = Validation::readNumber("Question ID: ", 1, 999999);
+            try {
+                Exam exam(id);
+                if (exam.removeQuestion(questionId)) {
+                    std::cout << "Question removed and exam paper saved.\n";
+                } else {
+                    std::cout << "Question not found in that exam.\n";
+                }
+            } catch (const std::exception& error) {
+                std::cout << "Exam could not be updated: " << error.what() << '\n';
             }
         }
+    }
+}
 
-    } while (choice != 3);
+void takeExam(StudentManager& students) {
+    showExams();
+    const int examId = Validation::readNumber("Exam ID: ", 1, 999999);
+    const int studentId = Validation::readNumber("Student ID: ", 1, 999999);
+    Student* student = students.findById(studentId);
+    if (student == nullptr) {
+        std::cout << "Student not found.\n";
+        return;
+    }
+    if (hasSavedAttempt(studentId, examId, true)) {
+        std::cout << "A saved attempt already exists for this student and exam.\n";
+        return;
+    }
+
+    try {
+        Exam exam(examId);
+        if (exam.getQuestions().empty()) {
+            std::cout << "This exam has no questions.\n";
+            return;
+        }
+
+        ExamAttempt attempt(studentId, *student, exam);
+        attempt.startExam();
+        bool finished = false;
+        while (!finished) {
+            std::cout << "\n1. Answer current question\n"
+                         "2. Next question\n"
+                         "3. Previous question\n"
+                         "4. Skip current question\n"
+                         "5. Submit exam\n";
+            const int action = Validation::readNumber("Action: ", 1, 5);
+            if (action == 1) {
+                const std::string response = Validation::readText("Your answer: ");
+                attempt.acceptAnswer(response);
+            } else if (action == 2) {
+                attempt.nextQuestion();
+            } else if (action == 3) {
+                attempt.previousQuestion();
+            } else if (action == 4) {
+                attempt.skipQuestion();
+            } else if (attempt.getAnswers().empty()) {
+                std::cout << "Record at least one answer before submitting.\n";
+            } else if (attempt.submitExam()) {
+                Evaluation evaluator;
+                const double marks = evaluator.evaluateAttempt(attempt, exam);
+                GradingSystem grading;
+                double percentage = 0.0;
+                std::string grade;
+                bool passed = false;
+                if (grading.calculatePercentage(marks, exam.getTotalMarks(), percentage) &&
+                    grading.calculateGrade(percentage, grade) &&
+                    grading.checkPassFail(percentage, passed)) {
+                    std::cout << std::fixed << std::setprecision(2)
+                              << "Percentage: " << percentage << "%\n"
+                              << "Grade: " << grade << "\n"
+                              << "Result: " << (passed ? "PASS" : "FAIL") << '\n';
+                } else {
+                    std::cout << "A result could not be calculated for this exam.\n";
+                }
+
+                if (!attempt.saveAttempt()) {
+                    std::cout << "The evaluated attempt could not be saved.\n";
+                }
+                finished = true;
+            }
+        }
+    } catch (const std::exception& error) {
+        std::cout << "The exam attempt could not be completed: "
+                  << error.what() << '\n';
+    }
+}
+
+void showStudentReport() {
+    const int studentId = Validation::readNumber("Student ID: ", 1, 999999);
+    const int examId = Validation::readNumber("Exam ID: ", 1, 999999);
+    StudentReport report;
+    report.generateReport(studentId, examId);
+}
+
+void showClassReport() {
+    const int examId = Validation::readNumber("Exam ID: ", 1, 999999);
+    const std::string className = Validation::readText("Class: ");
+    const std::string section = Validation::readText("Section: ");
+    ClassReport report;
+    report.generateReport(examId, className, section);
+}
+
+} // namespace
+
+int main() {
+    StudentManager students(STUDENT_FILE);
+    SubjectManager subjects(SUBJECT_FILE);
+    if (!students.loadData()) {
+        std::cerr << "Student records could not be loaded.\n";
+        return 1;
+    }
+    if (!subjects.loadData()) {
+        std::cerr << "Subject records could not be loaded.\n";
+        return 1;
+    }
+
+    int choice = -1;
+    try {
+        while (choice != 0) {
+            std::cout << "\n==========================================\n"
+                         " STUDENT ASSESSMENT AND GRADING SYSTEM\n"
+                         "==========================================\n"
+                         "1. Student management\n"
+                         "2. Subject management\n"
+                         "3. Exam management\n"
+                         "4. Take an exam\n"
+                         "5. Student report\n"
+                         "6. Class report and statistics\n"
+                         "0. Exit\n";
+            choice = Validation::readNumber("Choice: ", 0, 6);
+
+            switch (choice) {
+                case 1: manageStudents(students); break;
+                case 2: manageSubjects(subjects); break;
+                case 3: manageExams(subjects); break;
+                case 4: takeExam(students); break;
+                case 5: showStudentReport(); break;
+                case 6: showClassReport(); break;
+                case 0: break;
+            }
+        }
+    } catch (const std::exception& error) {
+        std::cerr << "Application stopped: " << error.what() << '\n';
+        return 1;
+    }
 
     return 0;
 }
