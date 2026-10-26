@@ -4,11 +4,10 @@
 #include <stdexcept>
 using namespace std;
 // Constructor
-<<<<<<< HEAD
-SubjectiveQuestion::SubjectiveQuestion(int id, const string& text, double marks, const string& answer)
-=======
-SubjectiveQuestion::SubjectiveQuestion(int id,const string& text,double marks,const string& answer)
->>>>>>> 02e772a6c4a9b57230baf33aa5936688f6e01ba8
+SubjectiveQuestion::SubjectiveQuestion(int id,
+                                       const string& text,
+                                       double marks,
+                                       const string& answer)
     : Question(id, text, marks),
       modelAnswer(answer)
 {

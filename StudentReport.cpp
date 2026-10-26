@@ -5,6 +5,7 @@
 #include "Evaluation.h"
 #include "Exam.h"
 #include "examattempt.h"
+#include "Answer.h"
 #include <cerrno>
 #include <cmath>
 #include <fstream>
@@ -31,12 +32,11 @@ bool hasNoTrailingData(std::istringstream& line) {
     line >> std::ws;
     return line.eof();
 }
-<<<<<<< HEAD
-
-AttemptLookupStatus loadAttemptForStudent(const std::string& filePath, int studentId, int examId, SavedAttempt& saved, bool& matchingAttemptSeen) {
-=======
-AttemptLookupStatus loadAttemptForStudent(const std::string& filePath,int studentId,int examId,SavedAttempt& saved,bool& matchingAttemptSeen) {
->>>>>>> 02e772a6c4a9b57230baf33aa5936688f6e01ba8
+AttemptLookupStatus loadAttemptForStudent(const std::string& filePath,
+                                          int studentId,
+                                          int examId,
+                                          SavedAttempt& saved,
+                                          bool& matchingAttemptSeen) {
     if (filePath.empty()) {
         return AttemptLookupStatus::invalid;
     }

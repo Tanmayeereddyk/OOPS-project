@@ -35,13 +35,8 @@ public:
         int studentId, int examId, StudentExamSummary& summary,
         std::ostream& out = std::cout,
         const std::string& attemptFilePath = AttemptStorage::defaultFilePath());
-<<<<<<< HEAD
-
-    bool generateReport(int studentId, int examId, std::ostream& out = std::cout, const std::string& attemptFilePath = AttemptStorage::defaultFilePath()) const;
-=======
     bool generateReport(int studentId, int examId,
                         std::ostream& out = std::cout,
                         const std::string& attemptFilePath = AttemptStorage::defaultFilePath()) const;
->>>>>>> 02e772a6c4a9b57230baf33aa5936688f6e01ba8
 };
 #endif
